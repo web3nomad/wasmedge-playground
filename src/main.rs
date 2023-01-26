@@ -4,36 +4,54 @@ use crate::models::relay::Relay;
 use crate::models::workflow::Workflow;
 
 mod models;
-mod jscode;
+// mod jscode;
 // mod lifetime;
 // mod block;
+
+const CODE0: &str = r#"
+function exec() {
+  return {
+    a: 0,
+    b: 0,
+  }
+}
+"#;
+
+const CODE1: &str = r#"
+function exec({ a, b }) {
+  return {
+    a: a + 1,
+    b: b + 1,
+    c: 10
+  }
+}
+"#;
+
+const CODE2: &str = r#"
+function exec({ a, b, c }) {
+  return {
+    a: a + 2,
+    b: b + 2,
+    c: c + 2
+  }
+}
+"#;
 
 fn handle_relay() {
   let mut workflow = Workflow::new("first workflow");
   println!("workflow | name: {}", workflow.name);
 
-  let mut root: Relay = Relay::new(&String::default(), &String::default());
-  root.execute(&workflow);
-  let hash = Relay::generate_hash();
-  root.hash = hash.clone();
-  println!("root | value: {}\n  hash: {}\n  parent: {}", root.payload.as_ref().unwrap().data, root.hash, root.parent_hash);
-  workflow.relays_store.insert(root.hash.clone(), root);
-  workflow.root_relay_hash = hash.clone();
+  let mut root: Relay = Relay::new(&String::default(), &String::default(), CODE0);
+  let hash = root.execute(&workflow);
+  workflow.add_relay(root, true);
 
-  let mut relay1 = Relay::new(&hash, &workflow.root_relay_hash);
-  relay1.execute(&workflow);
-  let hash = Relay::generate_hash();
-  relay1.hash = hash.clone();
-  println!("relay1 | value: {}\n  hash: {}\n  parent: {}", relay1.payload.as_ref().unwrap().data, relay1.hash, relay1.parent_hash);
-  workflow.relays_store.insert(relay1.hash.clone(), relay1);
+  let mut relay1 = Relay::new(&hash, &workflow.root_relay_hash, CODE1);
+  let hash = relay1.execute(&workflow);
+  workflow.add_relay(relay1, false);
 
-  let mut relay2 = Relay::new(&hash, &workflow.root_relay_hash);
+  let mut relay2 = Relay::new(&hash, &workflow.root_relay_hash, CODE2);
   relay2.execute(&workflow);
-  // relay2.execute(&workflow);
-  let hash = Relay::generate_hash();
-  relay2.hash = hash.clone();
-  println!("relay2 | value: {}\n  hash: {}\n  parent: {}", relay2.payload.as_ref().unwrap().data, relay2.hash, relay2.parent_hash);
-  workflow.relays_store.insert(relay2.hash.clone(), relay2);
+  workflow.add_relay(relay2, false);
 }
 
 fn main() {
@@ -42,6 +60,6 @@ fn main() {
     println!("- {}", argument);
   }
   handle_relay();
-  crate::jscode::execute();
+  // crate::jscode::execute();
   // crate::lifetime::run();
 }

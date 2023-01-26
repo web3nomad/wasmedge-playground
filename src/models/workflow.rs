@@ -17,6 +17,13 @@ impl Workflow {
     workflow
   }
 
+  pub fn add_relay(&mut self, relay: Relay, root: bool) {
+    if root {
+      self.root_relay_hash = relay.hash.clone();
+    }
+    self.relays_store.insert(relay.hash.clone(), relay);
+  }
+
   // pub fn set_root_hash(&mut self, hash: &str) {
   //   self.root_relay_hash = String::from(hash);
   // }
