@@ -4,7 +4,9 @@ use crate::models::relay::Relay;
 use crate::models::workflow::Workflow;
 
 mod models;
+mod jscode;
 // mod lifetime;
+// mod block;
 
 fn handle_relay() {
   let mut workflow = Workflow::new("first workflow");
@@ -39,7 +41,7 @@ fn main() {
   for argument in env::args().skip(1) {
     println!("- {}", argument);
   }
-  // handle_relayer();
   handle_relay();
+  crate::jscode::execute();
   // crate::lifetime::run();
 }
