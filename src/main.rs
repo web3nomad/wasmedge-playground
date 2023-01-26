@@ -4,6 +4,7 @@ use crate::models::relay::Relay;
 use crate::models::workflow::Workflow;
 
 mod models;
+// mod lifetime;
 
 fn handle_relay() {
   let mut workflow = Workflow::new("first workflow");
@@ -20,7 +21,7 @@ fn handle_relay() {
   println!("root | value: {}\n  hash: {}", root.payload.as_ref().unwrap().data, root.hash);
   println!("relay1 | value: {}\n  hash: {}\n  parent: {}", relay1.payload.as_ref().unwrap().data, relay1.hash, relay1.parent_hash);
   println!("relay2 | value: {}\n  hash: {}\n  parent: {}", relay2.payload.as_ref().unwrap().data, relay2.hash, relay2.parent_hash);
-  // drop(relay2);
+  drop(relay2);
 }
 
 fn main() {
@@ -30,4 +31,5 @@ fn main() {
   }
   // handle_relayer();
   handle_relay();
+  // crate::lifetime::run();
 }

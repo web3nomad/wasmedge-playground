@@ -28,8 +28,8 @@ impl<'a> Relay<'a> {
     }
   }
 
-  pub fn new<'b>(parent_relay: &'b Relay<'a>) -> Relay<'a> {
-    Self {
+  pub fn new<'b, 'c:'b>(parent_relay: &'b Relay<'c>) -> Relay<'c> {
+    Relay {
       workflow: parent_relay.workflow,
       hash: Self::generate_hash(),
       root_hash: parent_relay.root_hash.clone(),
