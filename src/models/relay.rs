@@ -28,17 +28,15 @@ impl<'a> Relay<'a> {
     }
   }
 
-  pub fn new(parent_relay: &Relay<'a>) -> Self {
-    let mut relay = Self {
+  pub fn new<'b>(parent_relay: &'b Relay<'a>) -> Relay<'a> {
+    Self {
       workflow: parent_relay.workflow,
       hash: Self::generate_hash(),
       root_hash: parent_relay.root_hash.clone(),
       parent_hash: parent_relay.hash.clone(),
       payload: None,
       value: u64::default(),
-    };
-    relay.execute();
-    return relay;
+    }
   }
 
   pub fn new_root() -> Self {
