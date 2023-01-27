@@ -8,11 +8,17 @@ mod models;
 // mod lifetime;
 // mod block;
 
+const CODE_TEST: &str = r#"
+function test({ a, c }) {
+  return a == c;
+}
+"#;
+
 const CODE0: &str = r#"
 function exec() {
   return {
-    a: 0,
-    b: 0,
+    a: 1,
+    b: 2,
   }
 }
 "#;
@@ -32,26 +38,28 @@ function exec({ a, b, c }) {
   return {
     a: a + 2,
     b: b + 2,
-    c: c + 2
+    c: a + 2,
   }
 }
 "#;
 
 fn handle_relay() {
-  let mut workflow = Workflow::new("first workflow");
+  let mut workflow = Workflow::new("first workflow", CODE_TEST);
   println!("workflow | name: {}", workflow.name);
 
-  let mut root: Relay = Relay::new(&String::default(), &String::default(), CODE0);
-  let hash = root.execute(&workflow);
-  workflow.add_relay(root, true);
+  let mut relay0 = Relay::new(&String::default(), &String::default(), CODE0, "0001", 10);
+  let hash = relay0.execute(&workflow);
+  workflow.add_relay(relay0, true);
 
-  let mut relay1 = Relay::new(&hash, &workflow.root_relay_hash, CODE1);
+  let mut relay1 = Relay::new(&hash, &workflow.root_relay_hash, CODE1, "0004", 8);
   let hash = relay1.execute(&workflow);
   workflow.add_relay(relay1, false);
 
-  let mut relay2 = Relay::new(&hash, &workflow.root_relay_hash, CODE2);
-  relay2.execute(&workflow);
+  let mut relay2 = Relay::new(&hash, &workflow.root_relay_hash, CODE2, "0008", 0);
+  let hash = relay2.execute(&workflow);
   workflow.add_relay(relay2, false);
+
+  drop(hash);
 }
 
 fn main() {

@@ -8,18 +8,20 @@ pub struct RelayPayload {
 }
 
 pub struct Relay {
-  pub hash: String,
-  pub parent_hash: String,
-  pub root_hash: String,
+  pub hash: String, // 64 hex
+  pub parent_hash: String, // 64 hex
+  pub root_hash: String, // 64 hex
 
   pub code: String,
   pub payload: Option<RelayPayload>,
+
+  pub owner: String, // 40 hex
   pub value: u64,
 }
 
 const CODE_TRIGGER: &str = r#"
 ;(function() {
-  const data = exec(JSON.parse(input_payload.data));
+  const data = exec(JSON.parse(inputPayload.data));
   return JSON.stringify(data);
 })();
 "#;
@@ -28,7 +30,7 @@ pub fn exec_code(input_payload: &RelayPayload, code: &str) -> String {
   let mut ctx = Context::new();
   let mut obj = ctx.new_object();
   obj.set("data", ctx.new_string(&input_payload.data).into());
-  ctx.get_global().set("input_payload", obj.into());
+  ctx.get_global().set("inputPayload", obj.into());
   let mut code = String::from(code);
   code.push_str(CODE_TRIGGER);
   let r = ctx.eval_global_str(&code);
@@ -42,16 +44,14 @@ pub fn exec_code(input_payload: &RelayPayload, code: &str) -> String {
 impl Relay {
   pub fn execute(&mut self, workflow: &Workflow) -> String {
     if let None = self.payload {
-      let mut input_payload: &RelayPayload = &RelayPayload {
-        data: String::from("{}"),
+      let mut input_payload = &RelayPayload {
+        data: String::from("{}"),  // 默认为空, 如果 parent 不存在的话
       };
-      match workflow.relays_store.get(&self.parent_hash) {
+      match workflow.relays.get(&self.parent_hash) {
         Some(parent_relay) => {
           input_payload = parent_relay.payload.as_ref().unwrap()
         },
-        _ => {
-          //
-        },
+        _ => {},
       }
       let data = exec_code(input_payload, &self.code);
       self.payload = Some(RelayPayload { data })
@@ -59,18 +59,20 @@ impl Relay {
       panic!("AAAaaaaa!!!!")
     }
     self.hash = Relay::generate_hash();
-    println!("relay | payload: {}\n  hash: {}\n  parent: {}", self.payload.as_ref().unwrap().data, self.hash, self.parent_hash);
+    println!("owner {} | value {}\n  payload: {}\n   parent: {}\n     hash: {}",
+      self.owner, self.value, self.payload.as_ref().unwrap().data, self.parent_hash, self.hash);
     self.hash.clone()
   }
 
-  pub fn new(parent_hash: &str, root_hash: &str, code: &str) -> Self {
+  pub fn new(parent_hash: &str, root_hash: &str, code: &str, owner: &str, value: u64) -> Self {
     Self {
       hash: String::default(),
       parent_hash: String::from(parent_hash),
       root_hash: String::from(root_hash),
       code: String::from(code),
       payload: None,
-      value: u64::default(),
+      owner: String::from(owner),
+      value: value,
     }
   }
 
